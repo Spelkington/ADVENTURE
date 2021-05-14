@@ -44,11 +44,19 @@ function SideCamera.set()
 				local camPosX = torso.Position.X
 				local camPosY = torso.Position.Y
 
-				camPosX = math.max(xBounds.min, torso.Position.X)
-				camPosX = math.min(xBounds.max, camPosX)
+				if xBounds["min"] < xBounds["max"] then						
+					camPosX = math.max(xBounds.min, torso.Position.X)
+					camPosX = math.min(xBounds.max, camPosX)
+				else
+					camPosX = panel.Position.X
+				end
 
-				camPosY = math.max(yBounds.min, torso.Position.Y)
-				camPosY = math.min(yBounds.max, camPosY)
+				if yBounds["min"] < yBounds["max"] then						
+					camPosY = math.max(yBounds.min, torso.Position.Y)
+					camPosY = math.min(yBounds.max, camPosY)
+				else
+					camPosY = panel.Position.Y
+				end
 
 				local cameraPosition = Vector3.new(
 					camPosX,
@@ -63,6 +71,12 @@ function SideCamera.set()
 					cameraPosition + (CAMERA_PLACEMENT * cameraDistance),
 					cameraPosition
 				)
+
+				-- Fix torso position to Z = 0
+				-- This possibly doesn't fit in the camera script,
+				-- but it sure is convenient!
+				local zdiff = panel.Position.Z - torso.Position.Z
+				torso.CFrame = torso.CFrame + Vector3.new(0, 0, zdiff)
 
 			elseif not cameraFree then
 
@@ -87,18 +101,16 @@ function SideCamera.setCameraAttributes()
 	if scene then
 
 		local panel: Part = scene.Panel
-		local horizField = math.sqrt(
-			math.pow(camera.DiagonalFieldOfView, 2) +
-			math.pow(camera.FieldOfView, 2)
-		)
-		local aspectRatio = camera.ViewportSize.X / camera.ViewportSize.Y
 
-		local width = panel.size.X / 2
-		if scene:FindFirstChild("ForceCameraProportion") then
-			width *= scene.ForceCameraProportion.Value
+		local aspectRatio = camera.ViewportSize.X / camera.ViewportSize.Y
+		local horizFOV = camera.FieldOfView / aspectRatio
+
+		local width = panel.size.X
+		if scene.Scene:FindFirstChild("ForceCameraProportion") then
+			width *= scene.Scene.ForceCameraProportion.Value
 		end
 
-		local dist = (width / 2) * math.tan(horizField / 2)
+		local dist = width / (2 * math.tan((1/2) * horizFOV))
 		cameraDistance.Value  = dist
 		cameraViewfield.Value = Vector3.new(
 			width,
@@ -106,7 +118,8 @@ function SideCamera.setCameraAttributes()
 			0
 		)
 
-		print("New camera distance set:" .. cameraDistance.Value)
+		print("Setting camera distance for width: " .. width)
+		print("New camera distance set: " .. cameraDistance.Value)
 		print("Camera viewpoint in blocks:")
 		print(cameraViewfield.Value)
 
