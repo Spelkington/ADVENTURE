@@ -1,8 +1,12 @@
-
+local Players = game:GetService("Players")
+local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local KeyframeSequenceProvider = game:GetService("KeyframeSequenceProvider")
 
 -- SCENE SCRIPTS ----------
 
 local Scene = require(game.ServerScriptService.Server.Scene)
+local Weapon = require(game.ServerScriptService.Server.Weapon)
 
 -- Load models into server storage from Tinker workspace
 _G.scenes = {}
@@ -21,3 +25,13 @@ game.Players.PlayerAdded:Connect(Scene.addPlayerSignals)
 if game.Workspace:FindFirstChild("Baseplate") then
     game.Workspace.Baseplate:Destroy()
 end
+
+-- Define player onAdded behavior
+Players.PlayerAdded:Connect(function(player: Player)
+
+    player.CharacterAdded:Connect(function(character: Character) 
+        print(character.Name .. " spawned!")
+        Weapon.givePlayerWeapon(player)
+    end)
+
+end)

@@ -9,7 +9,7 @@ local originalType = camera.CameraType
 
 local cameraFree = true
 
-camera.CameraType = Enum.CameraType.Scriptable
+camera.CameraType = Enum.CameraType.Custom
 
 local CAMERA_PLACEMENT = Vector3.new(0, 0, 1)
 
@@ -26,7 +26,6 @@ function SideCamera.set()
 				cameraFree = false
 
 				local panel: Part = scene.Panel
-
 
 				local cameraDistance  = player.SceneCameraDistance.Value
 				local cameraViewfield = player.SceneCameraViewfield.Value
@@ -103,14 +102,17 @@ function SideCamera.setCameraAttributes()
 		local panel: Part = scene.Panel
 
 		local aspectRatio = camera.ViewportSize.X / camera.ViewportSize.Y
-		local horizFOV = camera.FieldOfView / aspectRatio
+
+		local horizFOV = math.rad(camera.MaxAxisFieldOfView)
 
 		local width = panel.size.X
 		if scene.Scene:FindFirstChild("ForceCameraProportion") then
 			width *= scene.Scene.ForceCameraProportion.Value
 		end
 
-		local dist = width / (2 * math.tan((1/2) * horizFOV))
+		local angleCoef = 1 / (2 * math.tan(horizFOV / 2))
+
+		local dist = width * angleCoef
 		cameraDistance.Value  = dist
 		cameraViewfield.Value = Vector3.new(
 			width,
@@ -118,10 +120,14 @@ function SideCamera.setCameraAttributes()
 			0
 		)
 
-		print("Setting camera distance for width: " .. width)
-		print("New camera distance set: " .. cameraDistance.Value)
-		print("Camera viewpoint in blocks:")
-		print(cameraViewfield.Value)
+
+		print("Screen Dims:", camera.ViewportSize.X, camera.ViewportSize.Y)
+		print("theta_v", math.tan(camera.FieldOfView))
+		print("theta_h: ", horizFOV)
+		print("angleCoef", angleCoef)
+		print("Width: ", width)
+		print("New camera distance set: ", cameraDistance.Value)
+		print("Camera viewpoint in blocks: ", cameraViewfield.Value)
 
 	end
 

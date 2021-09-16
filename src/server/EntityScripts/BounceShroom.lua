@@ -9,6 +9,8 @@ local LAUNCH_TIME = 0.1
 local FALLCHECK_TIME = 0.5
 local DEBOUNCE_TIME = 1
 local DIVE_TILT = -45
+local SPIN_DAMPEN = 15
+local SPIN_MAX = math.pi * 8
 
 local TIERS = {
     80,
@@ -41,14 +43,13 @@ function BounceShroom:setup()
 
             if not self.debounce[entity.Name]
                and entity.HumanoidRootPart.Position.Y > self.button.position.Y
-               then
-                self.debounce[entity.Name] = true
+            then
 
+                self.debounce[entity.Name] = true
                 print(entity.Name .. " touched a mushroom!")
                 self:launch(entity)
-
-                wait(DEBOUNCE_TIME)
                 self.debounce[entity.Name] = false
+
             end
 
         end
@@ -100,7 +101,7 @@ function BounceShroom:launch(character: Model)
         diveDirection = 180 + DIVE_TILT * 2
     end
 
-    character.Humanoid.Sit = true
+    character.Humanoid.PlatformStand = true
 
     torso.CFrame = self.button.CFrame
                  * CFrame.Angles(0, math.rad(90 - DIVE_TILT + diveDirection), 0)
@@ -111,15 +112,21 @@ function BounceShroom:launch(character: Model)
     launchForce.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
     launchForce.Velocity = upVector * velocity
 
+    local spinForce: AngularVelocity = Instance.new("BodyAngularVelocity")
+    spinForce.Parent = torso
+    spinForce.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    spinForce.AngularVelocity = upVector * math.min(SPIN_MAX, velocity / SPIN_DAMPEN)
+
     wait(LAUNCH_TIME)
     launchForce:Destroy()
+    spinForce:Destroy()
 
     wait(FALLCHECK_TIME)
     while torso.AssemblyLinearVelocity.Y > USERCONTROL_VELOCITY do
         wait()
     end
 
-    character.Humanoid.Sit = false
+    character.Humanoid.PlatformStand = false
 
     return
 
